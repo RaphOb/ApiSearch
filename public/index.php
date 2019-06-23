@@ -1,4 +1,5 @@
 <?php
+use Elasticsearch\ClientBuilder;
 if (PHP_SAPI == 'cli-server') {
     // To help the built-in PHP dev server, check if the request was actually for
     // something which should probably be served as a static file
@@ -31,5 +32,14 @@ $routes($app);
 
 // Run app
 $app->run();
+$client = ClientBuilder::create()->build();
+$params = [
+    'index' => 'my_index',
+    'type' => 'my_type',
+    'id' => 'my_id',
+    'body' => ['testField' => 'abc']
+];
 
+$response = $client->index($params);
+print_r($response);
 
