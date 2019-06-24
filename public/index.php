@@ -1,5 +1,8 @@
 <?php
 use Elasticsearch\ClientBuilder;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+
 if (PHP_SAPI == 'cli-server') {
     // To help the built-in PHP dev server, check if the request was actually for
     // something which should probably be served as a static file
@@ -30,16 +33,148 @@ $middleware($app);
 $routes = require __DIR__ . '/../src/routes.php';
 $routes($app);
 
+
 // Run app
 $app->run();
-$client = ClientBuilder::create()->build();
-$params = [
-    'index' => 'my_index',
-    'type' => 'my_type',
-    'id' => 'my_id',
-    'body' => ['testField' => 'abc']
-];
 
-$response = $client->index($params);
-print_r($response);
+/**
+ * @param Request $request
+ * @param Response $response
+ * @return array
+ */
+function elasticQueries(Request $request, Response $response) {
+    $param = $request->getQueryParams();
+    $querie = $param['queri'];
+    $client = ClientBuilder::create()->build();
+    $param = [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'body' => [
+            'query' => [
+                'query_string' => [
+                    'query' => $querie.'~'
+                ]
+            ]
+        ]
+    ];
+  return $response = $client->get($param);
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function addVideoElasticData(Request $request, Response $response) {
+    $data = $request->getParsedBody();
+    $id = $request->getAttribute('id');
+    $client = ClientBuilder::create()->build();
+
+    $param = [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'id' => $id,
+        'body' => [
+            'name' => $data['name']
+        ]
+    ];
+    $response = $client->index($param);
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function deleteVideoElasticData(Request $request,Response $response) {
+    $client = ClientBuilder::create()->build();
+    $id = $request->getAttribute('id');
+    $param= [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'id' => $id
+    ];
+
+    $response = $client->delete($param);
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function addUserElasticData(Request $request, Response $response) {
+    $data = $request->getParsedBody();
+    $id = $request->getAttribute('id');
+    $client = ClientBuilder::create()->build();
+    $param = [
+        'index' => 'youtube',
+        'type' => 'users',
+        'id' => $id,
+        'body' => [
+            'username' => $data['username'],
+            'email' => $data['email']
+        ]
+    ];
+
+    $response = $client->index($param);
+
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function deleteUserElasticData(Request $request, Response $response) {
+    $client = ClientBuilder::create()->build();
+    $id = $request->getAttribute('id');
+    $param= [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'id' => $id
+    ];
+
+    $response = $client->delete($param);
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function updateUserElasticData(Request $request, Response $response) {
+    $client = ClientBuilder::create()->build();
+    $id = $request->getAttribute('id');
+    $data = $request->getParsedBody();
+    $params = [
+        'index' => 'youtube',
+        'type' => 'users',
+        'id' => $id,
+        'body' => [
+            'doc' => [
+                //TODO
+            ]
+        ]
+    ];
+
+    $response = $client->update($params);
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ */
+function updateVideoElasticData(Request $request, Response $response) {
+    $client = ClientBuilder::create()->build();
+    $id = $request->getAttribute('id');
+    $data = $request->getParsedBody();
+    $params = [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'id' => $id,
+        'body' => [
+            'doc' => [
+                //TODO
+            ]
+        ]
+    ];
+
+    $response = $client->update($params);
+}
 
