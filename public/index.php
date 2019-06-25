@@ -32,6 +32,7 @@ $middleware($app);
 
 // Register routes
 $routes = require __DIR__ . '/../src/routes.php';
+require __DIR__ . '/../src/common.php';
 $routes($app);
 
 
@@ -52,18 +53,22 @@ function elasticQueries(Request $request, Response $response)
         'index' => 'youtube',
         'body' => [
             'query' => [
-                'query_string' => [
-                    'query' => $querie . '~'
+                'match_all' => [
+//                    'query' => $querie . '~'
+                    'boost' => 1.0
                 ]
             ]
         ]
     ];
-    return error_log(print_r(($response = $client->search($param))));
+
+   $response = $client->search($param);
+    displayValidationJSON($response);
 }
 
 /**
  * @param Request $request
  * @param Response $response
+ * @return array
  */
 function addVideoElasticData(Request $request, Response $response)
 {
@@ -73,18 +78,20 @@ function addVideoElasticData(Request $request, Response $response)
 
     $param = [
         'index' => 'youtube',
+        'type' => 'videos',
         'id' => $id,
         'body' => [
             'typeOf' => 'videos',
             'name' => $data['name']
         ]
     ];
-    $response = $client->index($param);
+    return $response = $client->index($param);
 }
 
 /**
  * @param Request $request
  * @param Response $response
+ * @return array
  */
 function deleteVideoElasticData(Request $request, Response $response)
 {
@@ -96,12 +103,13 @@ function deleteVideoElasticData(Request $request, Response $response)
         'id' => $id
     ];
 
-    $response = $client->delete($param);
+    return $response = $client->delete($param);
 }
 
 /**
  * @param Request $request
  * @param Response $response
+ * @return array
  */
 function addUserElasticData(Request $request, Response $response)
 {
@@ -115,17 +123,18 @@ function addUserElasticData(Request $request, Response $response)
         'body' => [
             'type' => 'users',
             'username' => $data['username'],
-            'email' => $data['email']
+            'email' => $data['email'],
+            'pseudo' => $data['pseudo']
         ]
     ];
 
-    $response = $client->index($param);
-
+    return $response = $client->index($param);
 }
 
 /**
  * @param Request $request
  * @param Response $response
+ * @return array
  */
 function deleteUserElasticData(Request $request, Response $response)
 {
@@ -137,37 +146,15 @@ function deleteUserElasticData(Request $request, Response $response)
         'id' => $id
     ];
 
-    $response = $client->delete($param);
+    return $response = $client->delete($param);
 }
 
 /**
  * @param Request $request
  * @param Response $response
+ * @return array
  */
 function updateUserElasticData(Request $request, Response $response)
-{
-    $client = ClientBuilder::create()->build();
-    $id = $request->getAttribute('id');
-    $data = $request->getParsedBody();
-    $params = [
-        'index' => 'youtube',
-        'type' => 'users',
-        'id' => $id,
-        'body' => [
-            'doc' => [
-                //TODO
-            ]
-        ]
-    ];
-
-    $response = $client->update($params);
-}
-
-/**
- * @param Request $request
- * @param Response $response
- */
-function updateVideoElasticData(Request $request, Response $response)
 {
     $client = ClientBuilder::create()->build();
     $id = $request->getAttribute('id');
@@ -178,11 +165,40 @@ function updateVideoElasticData(Request $request, Response $response)
         'id' => $id,
         'body' => [
             'doc' => [
-                //TODO
+                'username' => $data['username'],
+                'email' => $data['email'],
+                'pseudo' => $data['pseudo']
             ]
         ]
     ];
 
-    $response = $client->update($params);
+    return $response = $client->update($params);
+
+}
+
+/**
+ * @param Request $request
+ * @param Response $response
+ * @return array
+ */
+function updateVideoElasticData(Request $request, Response $response)
+{
+    $client = ClientBuilder::create()->build();
+    $id = $request->getAttribute('id');
+    $data = $request->getParsedBody();
+    error_log(print_r("name:" . $data['name'], true));
+    $params = [
+        'index' => 'youtube',
+        'type' => 'videos',
+        'id' => $id,
+        'body' => [
+            'doc' => [
+                'name' => $data['name'],
+
+            ]
+        ]
+    ];
+
+    return $response = $client->update($params);
 }
 
