@@ -49,20 +49,19 @@ function elasticQueries(Request $request, Response $response)
     $param = $request->getQueryParams();
     $querie = $param['queri'];
     $client = ClientBuilder::create()->build();
+    error_log(print_r($querie), true);
     $param = [
         'index' => 'youtube',
         'body' => [
             'query' => [
-                'match_all' => [
-//                    'query' => $querie . '~'
-                    'boost' => 1.0
+                'query_string' => [
+                    'query' => $querie . '~'
                 ]
             ]
         ]
     ];
 
-   $response = $client->search($param);
-    displayValidationJSON($response);
+  return  $response = $client->search($param);
 }
 
 /**
